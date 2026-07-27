@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Neighbourhood — Accounts</title>
+<meta name="theme-color" content="#22201B">
+<link rel="icon" href="assets/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22201B; --parchment:#F1E9D8; --parchment-dim:#E7DCC5;
+    --marigold:#E8A33D; --brick:#B5482E; --sage:#6B7F5E; --ink-70:rgba(34,32,27,.7); --ink-45:rgba(34,32,27,.45);
+    font-family:'Work Sans',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--parchment);color:var(--ink);min-height:100vh;}
+  h1,h2,.display{font-family:'Fraunces',serif;font-weight:700;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  .app{max-width:560px;margin:0 auto;padding:0 20px 60px;}
+
+  header.bar{padding:24px 0 16px;display:flex;justify-content:space-between;align-items:flex-start;}
+  header.bar .the{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--brick);font-weight:600;}
+  header.bar h1{margin:2px 0 0;font-size:26px;}
+  .new-cust-btn{padding:11px 16px;border-radius:10px;border:none;background:var(--brick);color:var(--parchment);font-weight:600;font-size:13px;white-space:nowrap;margin-top:4px;}
+
+  .search-row{display:flex;gap:8px;margin-top:6px;position:relative;}
+  .search-row input{flex:1;padding:13px 15px 13px 40px;border-radius:10px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-size:15px;font-family:inherit;}
+  .search-row input:focus{outline:none;border-color:var(--brick);}
+  .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-45);font-size:15px;pointer-events:none;}
+  .search-hint{font-size:12px;color:var(--ink-45);margin:8px 2px 0;}
+
+  .results{margin-top:18px;}
+  .cust-row{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .cust-row .name{font-weight:600;font-size:15px;}
+  .cust-row .mobile{font-size:12px;color:var(--ink-45);margin-top:2px;font-family:'IBM Plex Mono';}
+  .cust-row .bal{font-family:'IBM Plex Mono';color:var(--brick);font-weight:600;font-size:15px;}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--ink-45);font-size:14px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(34,32,27,.5);display:none;align-items:flex-end;justify-content:center;z-index:20;}
+  .overlay.show{display:flex;}
+  .panel{background:var(--parchment);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom));}
+  .panel h3{margin:0 0 4px;font-size:20px;}
+  .panel .sub{font-size:13px;color:var(--ink-70);margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-70);margin-bottom:6px;font-weight:600;}
+  .field input{width:100%;padding:13px 15px;border-radius:10px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-size:16px;font-family:inherit;}
+  .field input:focus{outline:none;border-color:var(--brick);}
+  .amount-toggle{display:flex;gap:8px;margin-bottom:14px;}
+  .amount-toggle button{flex:1;padding:11px;border-radius:9px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-weight:600;font-size:14px;color:var(--ink-70);}
+  .amount-toggle button.active.add{background:var(--sage);color:#fff;border-color:var(--sage);}
+  .amount-toggle button.active.reduce{background:var(--brick);color:#fff;border-color:var(--brick);}
+  .btn-primary{width:100%;padding:14px;border-radius:10px;border:none;background:var(--ink);color:var(--parchment);font-size:15px;font-weight:600;margin-top:6px;}
+  .btn-secondary{width:100%;padding:12px;border:none;background:transparent;color:var(--ink-70);font-size:13px;margin-top:8px;}
+  .panel-error{color:var(--brick);font-size:13px;margin-top:8px;min-height:16px;}
+  .panel-success{color:var(--sage);font-size:13px;margin-top:8px;min-height:16px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div>
+      <div class="the">The Neighbourhood</div>
+      <h1>Accounts counter</h1>
+    </div>
+    <button class="new-cust-btn" onclick="openNewCustomer()">+ New customer</button>
+  </header>
+
+  <div class="search-row">
+    <span class="search-icon">🔍</span>
+    <input id="searchInput" type="text" placeholder="Search by name or mobile number…" oninput="debouncedSearch()">
+  </div>
+  <div class="search-hint">Type a name or a number — results match either, automatically.</div>
+
+  <div class="results" id="results">
+    <div class="empty-state">Search for a customer to load or reduce money.</div>
+  </div>
+</div>
+
+<!-- Adjust balance panel -->
+<div class="overlay" id="balanceOverlay">
+  <div class="panel">
+    <h3 id="balCustName">—</h3>
+    <div class="sub" id="balCustSub">—</div>
+    <div class="amount-toggle">
+      <button id="addBtn" class="active add" onclick="setTxnType('Add')">Add money</button>
+      <button id="reduceBtn" onclick="setTxnType('Reduce')">Reduce money</button>
+    </div>
+    <div class="field">
+      <label for="amountInput">Amount (₹)</label>
+      <input id="amountInput" type="number" inputmode="numeric" placeholder="500">
+    </div>
+    <button class="btn-primary" onclick="submitBalanceChange()">Confirm</button>
+    <button class="btn-secondary" onclick="closeOverlay('balanceOverlay')">Cancel</button>
+    <div class="panel-error" id="balanceError"></div>
+  </div>
+</div>
+
+<!-- New customer panel -->
+<div class="overlay" id="newCustOverlay">
+  <div class="panel">
+    <h3>New customer</h3>
+    <div class="sub">Mobile number is the unique ID — two customers can share a name, never a number.</div>
+    <div class="field"><label>Full name</label><input id="ncName" type="text" placeholder="Rahul Mehta"></div>
+    <div class="field"><label>Mobile number</label><input id="ncMobile" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210"></div>
+    <div class="field"><label>Password</label><input id="ncPassword" type="text" placeholder="Set a simple password"></div>
+    <div class="field"><label>Starting balance (₹)</label><input id="ncBalance" type="number" inputmode="numeric" placeholder="1000"></div>
+    <button class="btn-primary" onclick="submitNewCustomer()">Create account</button>
+    <button class="btn-secondary" onclick="closeOverlay('newCustOverlay')">Cancel</button>
+    <div class="panel-error" id="newCustError"></div>
+    <div class="panel-success" id="newCustSuccess"></div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAUESVBaflyYpjkoPHLx7tKeTUtfZbL83oEtB-2wxGDpjHFXEcvcIgsUvMMe2ynhWy-w/exec"; // same URL as index.html / counter.html / master.html
+
+const DUMMY_CUSTOMERS = [
+  {mobile:"9876543210", name:"Rahul Mehta", balance:640},
+  {mobile:"9123456780", name:"Priya Nair", balance:1200},
+  {mobile:"9988776655", name:"Rahul Sharma", balance:300},
+];
+
+let selectedCustomer = null;
+let txnType = 'Add';
+let searchDebounce;
+
+async function api(action, payload){
+  if(!APPS_SCRIPT_URL) return mockApi(action, payload);
+  const res = await fetch(APPS_SCRIPT_URL, {method:'POST', body: JSON.stringify({action, ...payload})});
+  return res.json();
+}
+function mockApi(action, payload){
+  if(action === 'searchCustomers'){
+    const q = payload.query.toLowerCase();
+    const list = DUMMY_CUSTOMERS.filter(c => c.name.toLowerCase().includes(q) || c.mobile.includes(q));
+    return {success:true, customers:list};
+  }
+  if(action === 'adjustBalance'){
+    const c = DUMMY_CUSTOMERS.find(c=>c.mobile===payload.mobile);
+    if(!c) return {success:false, error:'Not found'};
+    const delta = payload.type === 'Reduce' ? -Math.abs(payload.amount) : Math.abs(payload.amount);
+    c.balance += delta;
+    return {success:true, newBalance:c.balance};
+  }
+  if(action === 'addCustomer'){
+    if(DUMMY_CUSTOMERS.find(c=>c.mobile===payload.mobile)) return {success:false, error:'A customer with this mobile number already exists'};
+    DUMMY_CUSTOMERS.push({mobile:payload.mobile, name:payload.name, balance:Number(payload.balance)||0});
+    return {success:true};
+  }
+  return {success:false};
+}
+
+function debouncedSearch(){
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(runSearch, 250);
+}
+
+async function runSearch(){
+  const query = document.getElementById('searchInput').value.trim();
+  if(!query){ renderResults([]); return; }
+  const res = await api('searchCustomers', {query});
+  renderResults(res.success ? res.customers : []);
+}
+
+function renderResults(list){
+  const wrap = document.getElementById('results');
+  if(list.length === 0){
+    wrap.innerHTML = '<div class="empty-state">No matches yet — keep typing, or add a new customer.</div>';
+    return;
+  }
+  wrap.innerHTML = '';
+  list.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'cust-row';
+    row.innerHTML = `
+      <div>
+        <div class="name">${c.name}</div>
+        <div class="mobile">${c.mobile}</div>
+      </div>
+      <div class="bal">₹${c.balance}</div>
+    `;
+    row.onclick = () => openBalancePanel(c);
+    wrap.appendChild(row);
+  });
+}
+
+function openBalancePanel(c){
+  selectedCustomer = c;
+  document.getElementById('balCustName').textContent = c.name;
+  document.getElementById('balCustSub').textContent = c.mobile + ' · current balance ₹' + c.balance;
+  document.getElementById('amountInput').value = '';
+  document.getElementById('balanceError').textContent = '';
+  setTxnType('Add');
+  document.getElementById('balanceOverlay').classList.add('show');
+}
+
+function setTxnType(type){
+  txnType = type;
+  document.getElementById('addBtn').classList.toggle('active', type==='Add');
+  document.getElementById('reduceBtn').classList.toggle('active', type==='Reduce');
+}
+
+async function submitBalanceChange(){
+  const amount = Number(document.getElementById('amountInput').value);
+  const errEl = document.getElementById('balanceError');
+  if(!amount || amount <= 0){ errEl.textContent = 'Enter a valid amount.'; return; }
+  const res = await api('adjustBalance', {mobile: selectedCustomer.mobile, amount, type: txnType});
+  if(!res.success){ errEl.textContent = res.error || 'Could not update balance.'; return; }
+  selectedCustomer.balance = res.newBalance;
+  closeOverlay('balanceOverlay');
+  runSearch();
+}
+
+function openNewCustomer(){
+  ['ncName','ncMobile','ncPassword','ncBalance'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newCustError').textContent = '';
+  document.getElementById('newCustSuccess').textContent = '';
+  document.getElementById('newCustOverlay').classList.add('show');
+}
+
+async function submitNewCustomer(){
+  const name = document.getElementById('ncName').value.trim();
+  const mobile = document.getElementById('ncMobile').value.trim();
+  const password = document.getElementById('ncPassword').value;
+  const balance = Number(document.getElementById('ncBalance').value) || 0;
+  const errEl = document.getElementById('newCustError');
+  const okEl = document.getElementById('newCustSuccess');
+  errEl.textContent = ''; okEl.textContent = '';
+
+  if(!name || !mobile || !password){ errEl.textContent = 'Name, mobile number and password are required.'; return; }
+  if(!/^\d{10}$/.test(mobile)){ errEl.textContent = 'Enter a valid 10-digit mobile number.'; return; }
+
+  const res = await api('addCustomer', {name, mobile, password, balance});
+  if(!res.success){ errEl.textContent = res.error || 'Could not create customer.'; return; }
+  okEl.textContent = 'Account created for ' + name + '.';
+  setTimeout(() => closeOverlay('newCustOverlay'), 900);
+}
+
+function closeOverlay(id){
+  document.getElementById(id).classList.remove('show');
+}
+</script>
+</body>
+</html>

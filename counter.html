@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Neighbourhood — Outlet</title>
+<meta name="theme-color" content="#22201B">
+<link rel="icon" href="assets/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22201B; --parchment:#F1E9D8; --parchment-dim:#E7DCC5;
+    --marigold:#E8A33D; --brick:#B5482E; --sage:#6B7F5E; --ink-70:rgba(34,32,27,.7); --ink-45:rgba(34,32,27,.45);
+    font-family:'Work Sans',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ink);color:var(--parchment);min-height:100vh;}
+  h1,h2,.display{font-family:'Fraunces',serif;font-weight:700;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  header.bar{position:sticky;top:0;z-index:10;background:var(--ink);padding:20px 20px 14px;border-bottom:1px solid rgba(241,233,216,.12);}
+  header.bar h1{margin:0 0 2px;font-size:24px;}
+  header.bar .the{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--marigold);font-weight:600;}
+  .controls{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap;}
+  select{background:rgba(241,233,216,.08);color:var(--parchment);border:1.5px solid rgba(241,233,216,.2);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:14px;}
+  .locked-outlet{background:rgba(241,233,216,.08);border:1.5px solid rgba(241,233,216,.2);border-radius:8px;padding:9px 14px;font-size:14px;font-weight:600;}
+  .live-dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sage);margin-left:auto;}
+  .live-dot span.dot{width:7px;height:7px;border-radius:50%;background:var(--sage);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  .tabs{display:flex;gap:6px;margin-top:16px;}
+  .tabs button{padding:9px 16px;border-radius:999px;border:1.5px solid rgba(241,233,216,.2);background:transparent;color:var(--parchment);font-size:13px;font-weight:600;opacity:.6;}
+  .tabs button.active{background:var(--marigold);color:var(--ink);border-color:var(--marigold);opacity:1;}
+
+  main{max-width:820px;margin:0 auto;padding:20px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .section-label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:rgba(241,233,216,.55);font-weight:600;margin:22px 4px 12px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+
+  .ticket{background:var(--parchment);color:var(--ink);border-radius:14px;overflow:hidden;position:relative;}
+  .ticket.status-New{box-shadow:0 0 0 2px var(--marigold);}
+  .ticket.delivered{opacity:.7;}
+  .ticket-head{padding:14px 16px 10px;border-bottom:1.5px dashed rgba(34,32,27,.25);display:flex;justify-content:space-between;align-items:flex-start;}
+  .ticket-head .cust{font-family:'Fraunces';font-size:17px;font-weight:700;}
+  .ticket-head .mobile{font-size:11.5px;color:var(--ink-70);font-family:'IBM Plex Mono';margin-top:1px;}
+  .ticket-head .time{font-size:11px;color:var(--ink-45);margin-top:2px;}
+  .note-block{margin:0 16px 10px;padding:9px 11px;background:rgba(232,163,61,.18);border-left:3px solid var(--marigold);border-radius:0 8px 8px 0;font-size:12.5px;color:var(--ink);}
+  .note-block b{text-transform:uppercase;font-size:10px;letter-spacing:.06em;color:var(--brick);display:block;margin-bottom:2px;}
+  .status-tag{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;}
+  .status-tag.New{background:var(--marigold);color:var(--ink);}
+  .status-tag.Preparing{background:var(--brick);color:#fff;}
+  .status-tag.Prepared{background:var(--sage);color:#fff;}
+  .status-tag.Delivered{background:rgba(34,32,27,.1);color:var(--ink-45);}
+  .ticket-body{padding:10px 16px;}
+  .ticket-row{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;}
+  .ticket-row .amt{font-family:'IBM Plex Mono';}
+  .ticket-total{display:flex;justify-content:space-between;padding:10px 16px;background:var(--parchment-dim);font-weight:700;font-size:14px;}
+  .ticket-total .amt{font-family:'IBM Plex Mono';color:var(--brick);}
+  .ticket-actions{display:flex;gap:8px;padding:12px 16px 16px;}
+  .ticket-actions button{flex:1;padding:9px;border-radius:8px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-size:12.5px;font-weight:600;color:var(--ink);}
+  .ticket-actions button.active{background:var(--ink);color:var(--parchment);border-color:var(--ink);}
+  .empty-state{grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--parchment);opacity:.5;}
+  details{margin-top:6px;}
+  summary{cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:rgba(241,233,216,.55);font-weight:600;margin:0 4px 12px;}
+
+  /* Menu tab */
+  .menu-hint{font-size:13px;color:rgba(241,233,216,.6);margin:22px 4px 14px;}
+  .menu-item-row{display:flex;align-items:center;gap:12px;background:var(--parchment);color:var(--ink);border-radius:12px;padding:11px 14px;margin-bottom:8px;}
+  .menu-item-row .thumb{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#E7DCC5,#D9C9A3);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-45);overflow:hidden;flex-shrink:0;}
+  .menu-item-row .thumb img{width:100%;height:100%;object-fit:cover;}
+  .menu-item-row .info{flex:1;min-width:0;}
+  .menu-item-row .name{font-size:14px;font-weight:600;}
+  .menu-item-row .meta{font-size:11.5px;color:var(--ink-45);}
+  .menu-item-row .price{font-family:'IBM Plex Mono';font-size:13px;color:var(--brick);margin-right:2px;}
+  .avail-toggle{width:40px;height:24px;border-radius:999px;border:none;position:relative;background:rgba(34,32,27,.15);flex-shrink:0;}
+  .avail-toggle.on{background:var(--sage);}
+  .avail-toggle .knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease;}
+  .avail-toggle.on .knob{left:19px;}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="the">The Neighbourhood</div>
+  <h1>Outlet dashboard</h1>
+  <div class="controls" id="controlsRow">
+    <div class="live-dot"><span class="dot"></span> Live · refreshing every 10s</div>
+  </div>
+  <div class="tabs">
+    <button id="tabOrdersBtn" class="active" onclick="switchTab('orders')">Orders</button>
+    <button id="tabMenuBtn" onclick="switchTab('menu')">My menu</button>
+  </div>
+</header>
+<main>
+  <div class="tab-panel active" id="ordersTab">
+    <div class="section-label" id="activeLabel">Orders to prepare</div>
+    <div class="grid" id="activeOrders"></div>
+
+    <details>
+      <summary id="deliveredLabel">Delivered today (0)</summary>
+      <div class="grid" id="deliveredOrders"></div>
+    </details>
+  </div>
+
+  <div class="tab-panel" id="menuTab">
+    <div class="menu-hint" id="menuHint">Toggle items on or off — this controls what customers see on the live menu. Prices are set by master control.</div>
+    <div id="menuItemsList"></div>
+  </div>
+</main>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAUESVBaflyYpjkoPHLx7tKeTUtfZbL83oEtB-2wxGDpjHFXEcvcIgsUvMMe2ynhWy-w/exec"; // same URL as index.html
+
+const DUMMY_ORDERS = [
+  {orderId:"DEMO1001", timestamp:new Date().toISOString(), customerName:"Rahul Mehta", mobile:"9876543210", outlet:"Sizzling Woks",
+   items:[{name:"Veg Hakka Noodles",qty:2,price:140},{name:"Chilli Paneer",qty:1,price:170}], total:450, status:"New", notes:"Less spicy please, extra napkins"},
+  {orderId:"DEMO1002", timestamp:new Date().toISOString(), customerName:"Priya Nair", mobile:"9123456780", outlet:"Southern Spice",
+   items:[{name:"Masala Dosa",qty:1,price:90}], total:90, status:"Preparing", notes:""},
+  {orderId:"DEMO1003", timestamp:new Date(Date.now()-3600000).toISOString(), customerName:"Aman Gill", mobile:"9988776655", outlet:"Sizzling Woks",
+   items:[{name:"Schezwan Fried Rice",qty:1,price:150}], total:150, status:"Delivered", notes:""},
+];
+const DUMMY_MENU_ADMIN = [
+  {id:"SW1", outlet:"Sizzling Woks", category:"Mains", name:"Veg Hakka Noodles", price:140, image:"", available:true},
+  {id:"SW2", outlet:"Sizzling Woks", category:"Mains", name:"Chilli Paneer", price:170, image:"", available:true},
+  {id:"SS1", outlet:"Southern Spice", category:"Breakfast", name:"Masala Dosa", price:90, image:"", available:true},
+];
+
+// Lock this dashboard to one outlet via URL, e.g. counter.html?outlet=Sizzling%20Woks
+const urlParams = new URLSearchParams(window.location.search);
+const lockedOutlet = urlParams.get('outlet');
+let knownOutlets = new Set();
+let currentTab = 'orders';
+
+function setupControls(){
+  const row = document.getElementById('controlsRow');
+  if(lockedOutlet){
+    const badge = document.createElement('div');
+    badge.className = 'locked-outlet';
+    badge.textContent = lockedOutlet;
+    row.prepend(badge);
+  } else {
+    const sel = document.createElement('select');
+    sel.id = 'outletFilter';
+    sel.innerHTML = '<option value="All">All outlets</option>';
+    sel.onchange = () => { loadOrders(); loadOutletMenu(); };
+    row.prepend(sel);
+  }
+}
+
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('tabOrdersBtn').classList.toggle('active', tab==='orders');
+  document.getElementById('tabMenuBtn').classList.toggle('active', tab==='menu');
+  document.getElementById('ordersTab').classList.toggle('active', tab==='orders');
+  document.getElementById('menuTab').classList.toggle('active', tab==='menu');
+  if(tab === 'menu') loadOutletMenu();
+}
+
+async function api(action, payload){
+  if(!APPS_SCRIPT_URL) return mockApi(action, payload);
+  const res = await fetch(APPS_SCRIPT_URL, {method:'POST', body: JSON.stringify({action, ...payload})});
+  return res.json();
+}
+function mockApi(action, payload){
+  if(action === 'getOrders') return {success:true, orders: DUMMY_ORDERS};
+  if(action === 'updateOrderStatus'){
+    const o = DUMMY_ORDERS.find(x=>x.orderId===payload.orderId);
+    if(o) o.status = payload.status;
+    return {success:true};
+  }
+  if(action === 'getMenuAdmin') return {success:true, items: DUMMY_MENU_ADMIN};
+  if(action === 'toggleMenuItemAvailability'){
+    const it = DUMMY_MENU_ADMIN.find(i=>i.id===payload.id);
+    if(it) it.available = payload.available === 'true' || payload.available === true;
+    return {success:true};
+  }
+  return {success:false};
+}
+
+function timeAgo(ts){
+  const diff = Math.floor((Date.now() - new Date(ts).getTime())/1000);
+  if(diff < 60) return diff + 's ago';
+  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+  return Math.floor(diff/3600) + 'h ago';
+}
+
+function ticketHtml(o){
+  return `
+    <div class="ticket-head">
+      <div>
+        <div class="cust">${o.customerName}</div>
+        <div class="mobile">${o.mobile || ''}</div>
+        <div class="time">${o.outlet} · ${timeAgo(o.timestamp)}</div>
+      </div>
+      <div class="status-tag ${o.status}">${o.status}</div>
+    </div>
+    ${o.notes ? `<div class="note-block"><b>Note for kitchen</b>${o.notes}</div>` : ''}
+    <div class="ticket-body">
+      ${o.items.map(i => `<div class="ticket-row"><span>${i.qty} × ${i.name}</span><span class="amt">₹${i.qty*i.price}</span></div>`).join('')}
+    </div>
+    <div class="ticket-total"><span>Total</span><span class="amt">₹${o.total}</span></div>
+    <div class="ticket-actions">
+      ${['Preparing','Prepared','Delivered'].map(s =>
+        `<button class="${o.status===s?'active':''}" onclick="setStatus('${o.orderId}','${s}')">${s}</button>`
+      ).join('')}
+    </div>
+  `;
+}
+
+async function loadOrders(){
+  const outlet = lockedOutlet || (document.getElementById('outletFilter')?.value || 'All');
+  const res = await api('getOrders', {outlet});
+  const orders = res.success ? res.orders : [];
+
+  orders.forEach(o => knownOutlets.add(o.outlet));
+  syncOutletDropdown();
+
+  const active = orders.filter(o => o.status !== 'Delivered');
+  const delivered = orders.filter(o => o.status === 'Delivered');
+
+  const activeWrap = document.getElementById('activeOrders');
+  activeWrap.innerHTML = active.length === 0
+    ? '<div class="empty-state">No orders to prepare right now.</div>'
+    : active.map(o => `<div class="ticket status-${o.status}">${ticketHtml(o)}</div>`).join('');
+
+  const deliveredWrap = document.getElementById('deliveredOrders');
+  deliveredWrap.innerHTML = delivered.length === 0
+    ? '<div class="empty-state">Nothing delivered yet.</div>'
+    : delivered.map(o => `<div class="ticket delivered">${ticketHtml(o)}</div>`).join('');
+
+  document.getElementById('deliveredLabel').textContent = 'Delivered today (' + delivered.length + ')';
+}
+
+async function loadOutletMenu(){
+  const outlet = lockedOutlet || (document.getElementById('outletFilter')?.value || 'All');
+  const wrap = document.getElementById('menuItemsList');
+  const hint = document.getElementById('menuHint');
+
+  if(outlet === 'All'){
+    hint.textContent = 'Pick an outlet above to manage its menu.';
+    wrap.innerHTML = '';
+    return;
+  }
+  hint.textContent = 'Toggle items on or off — this controls what customers see on the live menu for ' + outlet + '. Prices are set by master control.';
+
+  const res = await api('getMenuAdmin', {});
+  const items = (res.success ? res.items : []).filter(i => i.outlet === outlet);
+
+  wrap.innerHTML = items.length === 0
+    ? '<div class="empty-state" style="color:rgba(241,233,216,.5);">No menu items for this outlet yet — ask master control to add some.</div>'
+    : items.map(i => `
+      <div class="menu-item-row">
+        <div class="thumb">${i.image ? `<img src="${i.image}">` : '🍽️'}</div>
+        <div class="info">
+          <div class="name">${i.name}</div>
+          <div class="meta">${i.category || ''}</div>
+        </div>
+        <span class="price">₹${i.price}</span>
+        <button class="avail-toggle ${i.available ? 'on' : ''}" onclick="toggleAvailability('${i.id}', ${!i.available})">
+          <span class="knob"></span>
+        </button>
+      </div>
+    `).join('');
+}
+
+async function toggleAvailability(id, newState){
+  await api('toggleMenuItemAvailability', {id, available: newState});
+  loadOutletMenu();
+}
+
+function syncOutletDropdown(){
+  const sel = document.getElementById('outletFilter');
+  if(!sel) return;
+  const current = sel.value;
+  const existing = new Set(Array.from(sel.options).map(o=>o.value));
+  knownOutlets.forEach(name => {
+    if(!existing.has(name)){
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    }
+  });
+  sel.value = current;
+}
+
+async function setStatus(orderId, status){
+  await api('updateOrderStatus', {orderId, status});
+  loadOrders();
+}
+
+setupControls();
+loadOrders();
+if(lockedOutlet) loadOutletMenu();
+setInterval(() => { if(currentTab === 'orders') loadOrders(); }, 10000);
+</script>
+</body>
+</html>
