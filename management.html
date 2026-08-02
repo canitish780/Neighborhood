@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Neighbourhood — Management</title>
+<meta name="theme-color" content="#22201B">
+<link rel="icon" href="assets/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22201B; --parchment:#F1E9D8; --parchment-dim:#E7DCC5;
+    --marigold:#E8A33D; --brick:#B5482E; --sage:#6B7F5E; --ink-70:rgba(34,32,27,.7); --ink-45:rgba(34,32,27,.45);
+    font-family:'Work Sans',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--parchment);color:var(--ink);min-height:100vh;}
+  h1,h2,h3,.display{font-family:'Fraunces',serif;font-weight:700;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--marigold);color:var(--ink);}
+
+  /* ---- Login ---- */
+  #loginScreen{max-width:420px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 28px 60px;}
+  .brand-mark .the{font-family:'Work Sans';font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--brick);font-weight:600;}
+  #loginScreen h1{font-size:34px;margin:2px 0 4px;}
+  .tagline{color:var(--ink-70);font-size:14px;margin:0 0 32px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-70);margin-bottom:6px;font-weight:600;}
+  .field input,.field select{width:100%;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-size:16px;font-family:inherit;color:var(--ink);}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--brick);}
+  .btn-primary{width:100%;padding:15px;border-radius:10px;border:none;background:var(--brick);color:var(--parchment);font-size:16px;font-weight:600;}
+  .msg{font-size:13px;margin-top:10px;min-height:16px;}
+  .msg.err{color:var(--brick);}
+  .msg.ok{color:var(--sage);}
+  .login-hint{margin-top:24px;font-size:12px;color:var(--ink-45);text-align:center;}
+
+  /* ---- Dashboard shell ---- */
+  #dashboard{display:none;min-height:100vh;background:var(--ink);color:var(--parchment);}
+  header.bar{position:sticky;top:0;z-index:10;background:var(--ink);padding:18px 20px 14px;border-bottom:1px solid rgba(241,233,216,.12);display:flex;justify-content:space-between;align-items:flex-start;}
+  header.bar .the{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--marigold);font-weight:600;}
+  header.bar h1{margin:2px 0 0;font-size:22px;}
+  header.bar .who{font-size:12px;color:rgba(241,233,216,.6);margin-top:2px;}
+  .logout-btn{padding:9px 14px;border-radius:9px;border:1.5px solid rgba(241,233,216,.25);background:transparent;color:var(--parchment);font-size:12.5px;font-weight:600;white-space:nowrap;}
+
+  main{max-width:860px;margin:0 auto;padding:20px 20px 60px;}
+  .role-panel{display:none;}
+  .role-panel.active{display:block;}
+
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+  .tabs button{padding:9px 16px;border-radius:999px;border:1.5px solid rgba(241,233,216,.2);background:transparent;color:var(--parchment);font-size:13px;font-weight:600;opacity:.6;}
+  .tabs button.active{background:var(--marigold);color:var(--ink);border-color:var(--marigold);opacity:1;}
+  .sub-panel{display:none;}
+  .sub-panel.active{display:block;}
+
+  .card{background:var(--parchment);color:var(--ink);border-radius:14px;padding:18px;margin-bottom:16px;}
+  .card h3{margin:0 0 4px;font-size:17px;}
+  .card .sub{font-size:12.5px;color:var(--ink-70);margin-bottom:14px;}
+  .card .sub.dark{color:rgba(241,233,216,.6);}
+
+  .in-field{margin-bottom:14px;}
+  .in-field label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-70);margin-bottom:6px;font-weight:600;}
+  .in-field input,.in-field select{width:100%;padding:12px 14px;border-radius:9px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-size:15px;font-family:inherit;}
+  .in-field input:focus,.in-field select:focus{outline:none;border-color:var(--brick);}
+  .inline-row{display:flex;gap:10px;}
+  .inline-row .in-field{flex:1;}
+  .btn-solid{width:100%;padding:13px;border-radius:10px;border:none;background:var(--brick);color:var(--parchment);font-size:14px;font-weight:600;}
+
+  .outlet-chip{display:inline-flex;align-items:center;background:var(--parchment-dim);padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:600;margin:0 6px 6px 0;}
+  .empty-state{text-align:center;padding:30px 20px;color:var(--ink-45);font-size:13px;}
+  .empty-state.dark{color:rgba(241,233,216,.5);}
+
+  .photo-upload{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+  .photo-preview{width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#E7DCC5,#D9C9A3);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--ink-45);overflow:hidden;flex-shrink:0;}
+  .photo-preview img{width:100%;height:100%;object-fit:cover;}
+  .upload-btn{padding:9px 14px;border-radius:8px;border:1.5px dashed rgba(34,32,27,.3);background:transparent;font-size:13px;font-weight:600;color:var(--ink-70);}
+
+  .row-card{display:flex;align-items:center;gap:12px;background:var(--parchment);color:var(--ink);border-radius:12px;padding:11px 14px;margin-bottom:8px;}
+  .row-card .thumb{width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,#E7DCC5,#D9C9A3);display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--ink-45);overflow:hidden;flex-shrink:0;}
+  .row-card .thumb img{width:100%;height:100%;object-fit:cover;}
+  .row-card .info{flex:1;min-width:0;}
+  .row-card .name{font-size:14px;font-weight:600;}
+  .row-card .meta{font-size:11.5px;color:var(--ink-45);}
+  .row-card .price{font-family:'IBM Plex Mono';font-size:13px;color:var(--brick);margin-right:2px;}
+  .edit-price-btn{width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(34,32,27,.15);background:#fff;font-size:13px;flex-shrink:0;}
+  .avail-badge{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;margin-left:8px;}
+  .avail-badge.on{background:var(--sage);color:#fff;}
+  .avail-badge.off{background:rgba(34,32,27,.1);color:var(--ink-45);}
+  .avail-toggle{width:40px;height:24px;border-radius:999px;border:none;position:relative;background:rgba(34,32,27,.15);flex-shrink:0;}
+  .avail-toggle.on{background:var(--sage);}
+  .avail-toggle .knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease;}
+  .avail-toggle.on .knob{left:19px;}
+  .group-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(241,233,216,.55);font-weight:600;margin:18px 2px 8px;}
+
+  .cust-row{background:var(--parchment);color:var(--ink);border-radius:12px;padding:13px 15px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+  .cust-row .name{font-weight:600;font-size:14.5px;}
+  .cust-row .mobile{font-size:11.5px;color:var(--ink-45);font-family:'IBM Plex Mono';margin-top:1px;}
+  .cust-row .bal{font-family:'IBM Plex Mono';color:var(--brick);font-weight:600;font-size:14.5px;}
+  .search-row{position:relative;margin-bottom:6px;}
+  .search-row input{width:100%;padding:12px 14px 12px 38px;border-radius:10px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-size:14.5px;font-family:inherit;}
+  .search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-45);font-size:14px;}
+  .list-count{font-size:11.5px;color:rgba(241,233,216,.5);margin:2px 4px 12px;}
+
+  /* Orders tickets (KMP + Outlet) */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+  .ticket{background:var(--parchment);color:var(--ink);border-radius:14px;overflow:hidden;position:relative;}
+  .ticket.status-New{box-shadow:0 0 0 2px var(--marigold);}
+  .ticket.delivered{opacity:.7;}
+  .ticket-head{padding:13px 15px 9px;border-bottom:1.5px dashed rgba(34,32,27,.25);display:flex;justify-content:space-between;align-items:flex-start;}
+  .ticket-head .cust{font-family:'Fraunces';font-size:16px;font-weight:700;}
+  .ticket-head .mobile{font-size:11px;color:var(--ink-70);font-family:'IBM Plex Mono';margin-top:1px;}
+  .ticket-head .time{font-size:10.5px;color:var(--ink-45);margin-top:2px;}
+  .note-block{margin:0 15px 9px;padding:8px 10px;background:rgba(232,163,61,.18);border-left:3px solid var(--marigold);border-radius:0 8px 8px 0;font-size:12px;color:var(--ink);}
+  .note-block b{text-transform:uppercase;font-size:9.5px;letter-spacing:.06em;color:var(--brick);display:block;margin-bottom:2px;}
+  .status-tag{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;}
+  .status-tag.New{background:var(--marigold);color:var(--ink);}
+  .status-tag.Preparing{background:var(--brick);color:#fff;}
+  .status-tag.Prepared{background:var(--sage);color:#fff;}
+  .status-tag.Delivered{background:rgba(34,32,27,.1);color:var(--ink-45);}
+  .ticket-body{padding:9px 15px;}
+  .ticket-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;}
+  .ticket-row .amt{font-family:'IBM Plex Mono';}
+  .ticket-total{display:flex;justify-content:space-between;padding:9px 15px;background:var(--parchment-dim);font-weight:700;font-size:13.5px;}
+  .ticket-total .amt{font-family:'IBM Plex Mono';color:var(--brick);}
+  .ticket-actions{display:flex;gap:8px;padding:11px 15px 15px;}
+  .ticket-actions button{flex:1;padding:8px;border-radius:8px;border:1.5px solid rgba(34,32,27,.18);background:#fff;font-size:12px;font-weight:600;color:var(--ink);}
+  .ticket-actions button.active{background:var(--ink);color:var(--parchment);border-color:var(--ink);}
+  details{margin-top:6px;}
+  summary{cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:rgba(241,233,216,.55);font-weight:600;margin:0 4px 12px;}
+  select.dark-select{background:rgba(241,233,216,.08);color:var(--parchment);border:1.5px solid rgba(241,233,216,.2);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:14px;margin-bottom:16px;}
+  .locked-outlet-badge{background:rgba(241,233,216,.08);border:1.5px solid rgba(241,233,216,.2);border-radius:8px;padding:9px 14px;font-size:14px;font-weight:600;display:inline-block;margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="brand-mark"><span class="the">The</span></div>
+  <h1>Neighbourhood</h1>
+  <p class="tagline">Staff login — accounts, outlets & master control.</p>
+
+  <div class="field"><label>Username</label><input id="mgmtUsername" type="text" placeholder="e.g. accounts1"></div>
+  <div class="field"><label>Password</label><input id="mgmtPassword" type="password" placeholder="••••••"></div>
+  <div class="field">
+    <label>Log in as</label>
+    <select id="mgmtRole">
+      <option value="KMP">Master control (KMP)</option>
+      <option value="Accounts">Accounts counter</option>
+      <option value="Outlet">Outlet</option>
+    </select>
+  </div>
+  <button class="btn-primary" onclick="doMgmtLogin()">Log in</button>
+  <div class="msg err" id="loginError"></div>
+  <div class="login-hint">Ask master control if you don't have a login yet.</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header class="bar">
+    <div>
+      <div class="the">The Neighbourhood</div>
+      <h1 id="dashTitle">Dashboard</h1>
+      <div class="who" id="dashWho">—</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </header>
+  <main>
+
+    <!-- KMP -->
+    <div class="role-panel" id="kmpPanel">
+      <div class="tabs">
+        <button class="active" onclick="switchKmpTab('outlets')">Outlets</button>
+        <button onclick="switchKmpTab('menu')">Menu</button>
+        <button onclick="switchKmpTab('orders')">Orders</button>
+        <button onclick="switchKmpTab('users')">Users</button>
+      </div>
+
+      <div class="sub-panel active" id="kmpOutlets">
+        <div class="card">
+          <h3>Add an outlet</h3>
+          <div class="sub">Appears immediately in every menu dropdown and outlet login.</div>
+          <div class="in-field"><label>Outlet name</label><input id="outletName" type="text" placeholder="e.g. Rolls & Bowls"></div>
+          <button class="btn-solid" onclick="submitOutlet()">Add outlet</button>
+          <div class="msg" id="outletMsg"></div>
+        </div>
+        <div class="card">
+          <h3>Current outlets</h3>
+          <div id="outletList"></div>
+        </div>
+      </div>
+
+      <div class="sub-panel" id="kmpMenu">
+        <div class="card">
+          <h3>Add a menu item</h3>
+          <div class="sub">Photo shows on the customer app — placeholder until you upload one.</div>
+          <div class="photo-upload">
+            <div class="photo-preview" id="photoPreview">🍽️</div>
+            <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoSelect(event)">
+            <button class="upload-btn" onclick="document.getElementById('photoInput').click()">Upload photo</button>
+          </div>
+          <div class="in-field"><label>Outlet</label><select id="itemOutlet"><option value="">Select outlet…</option></select></div>
+          <div class="inline-row">
+            <div class="in-field"><label>Category</label><input id="itemCategory" type="text" placeholder="Mains"></div>
+            <div class="in-field"><label>Price (₹)</label><input id="itemPrice" type="number" inputmode="numeric" placeholder="150"></div>
+          </div>
+          <div class="in-field"><label>Item name</label><input id="itemName" type="text" placeholder="Chilli Paneer"></div>
+          <button class="btn-solid" onclick="submitMenuItem()">Add item</button>
+          <div class="msg" id="menuMsg"></div>
+        </div>
+        <div class="group-label" style="margin-top:0;">All items · tap the price to edit it</div>
+        <div class="sub dark" style="margin:-4px 2px 10px;">Turning items on/off is done by each outlet on its own dashboard.</div>
+        <div id="menuList"></div>
+      </div>
+
+      <div class="sub-panel" id="kmpOrders">
+        <select class="dark-select" id="kmpOutletFilter" onchange="loadKmpOrders()"><option value="All">All outlets</option></select>
+        <div class="grid" id="kmpOrdersGrid"></div>
+      </div>
+
+      <div class="sub-panel" id="kmpUsers">
+        <div class="card">
+          <h3>Add a staff login</h3>
+          <div class="sub">Accounts staff can load/reduce money. Outlet staff are tied to one outlet's dashboard.</div>
+          <div class="in-field"><label>Full name</label><input id="userName" type="text" placeholder="Priya Singh"></div>
+          <div class="inline-row">
+            <div class="in-field"><label>Username</label><input id="userUsername" type="text" placeholder="accounts2"></div>
+            <div class="in-field"><label>Password</label><input id="userPassword" type="text" placeholder="Set a password"></div>
+          </div>
+          <div class="in-field"><label>Role</label>
+            <select id="userRole" onchange="toggleUserOutletField()">
+              <option value="Accounts">Accounts counter</option>
+              <option value="Outlet">Outlet</option>
+            </select>
+          </div>
+          <div class="in-field" id="userOutletField" style="display:none;"><label>Which outlet?</label><select id="userOutlet"></select></div>
+          <button class="btn-solid" onclick="submitUser()">Create login</button>
+          <div class="msg" id="userMsg"></div>
+        </div>
+        <div class="card">
+          <h3>Existing staff logins</h3>
+          <div id="userList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCOUNTS -->
+    <div class="role-panel" id="accountsPanel">
+      <div class="card">
+        <h3>Find a customer</h3>
+        <div class="search-row">
+          <span class="search-icon">🔍</span>
+          <input id="searchInput" type="text" placeholder="Search by name or mobile number…" oninput="debouncedSearch()">
+        </div>
+        <button class="btn-solid" style="margin-top:10px;" onclick="openNewCustomer()">+ New customer</button>
+      </div>
+      <div class="list-count" id="custListLabel">All customers</div>
+      <div id="custResults"></div>
+    </div>
+
+    <!-- OUTLET -->
+    <div class="role-panel" id="outletPanel">
+      <div class="locked-outlet-badge" id="outletBadge">—</div>
+      <div class="tabs">
+        <button class="active" onclick="switchOutletTab('orders')">Orders</button>
+        <button onclick="switchOutletTab('menu')">My menu</button>
+      </div>
+
+      <div class="sub-panel active" id="outletOrders">
+        <div class="group-label" style="margin-top:0;">Orders to prepare</div>
+        <div class="grid" id="outletActiveOrders"></div>
+        <details>
+          <summary id="outletDeliveredLabel">Delivered today (0)</summary>
+          <div class="grid" id="outletDeliveredOrders"></div>
+        </details>
+      </div>
+
+      <div class="sub-panel" id="outletMenu">
+        <div class="sub dark" style="margin:0 4px 14px;">Toggle items on or off — controls what customers see live. Prices are set by master control.</div>
+        <div id="outletMenuList"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Balance adjust overlay (Accounts) -->
+<div class="overlay" id="balanceOverlay" style="position:fixed;inset:0;background:rgba(34,32,27,.5);display:none;align-items:flex-end;justify-content:center;z-index:30;">
+  <div style="background:var(--parchment);color:var(--ink);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom));">
+    <h3 id="balCustName" style="margin:0 0 4px;font-size:20px;">—</h3>
+    <div class="sub" id="balCustSub">—</div>
+    <div style="display:flex;gap:8px;margin:14px 0;">
+      <button id="addBtn" style="flex:1;padding:11px;border-radius:9px;border:1.5px solid var(--sage);background:var(--sage);color:#fff;font-weight:600;font-size:14px;" onclick="setTxnType('Add')">Add money</button>
+      <button id="reduceBtn" style="flex:1;padding:11px;border-radius:9px;border:1.5px solid rgba(34,32,27,.18);background:#fff;color:var(--ink-70);font-weight:600;font-size:14px;" onclick="setTxnType('Reduce')">Reduce money</button>
+    </div>
+    <div class="in-field"><label>Amount (₹)</label><input id="amountInput" type="number" inputmode="numeric" placeholder="500"></div>
+    <button class="btn-solid" onclick="submitBalanceChange()">Confirm</button>
+    <button style="width:100%;padding:12px;border:none;background:transparent;color:var(--ink-70);font-size:13px;margin-top:6px;" onclick="closeOverlay('balanceOverlay')">Cancel</button>
+    <div class="msg err" id="balanceError"></div>
+  </div>
+</div>
+
+<!-- New customer overlay -->
+<div class="overlay" id="newCustOverlay" style="position:fixed;inset:0;background:rgba(34,32,27,.5);display:none;align-items:flex-end;justify-content:center;z-index:30;">
+  <div style="background:var(--parchment);color:var(--ink);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom));">
+    <h3 style="margin:0 0 4px;font-size:20px;">New customer</h3>
+    <div class="sub">Mobile number is the unique ID — two customers can share a name, never a number.</div>
+    <div class="in-field"><label>Full name</label><input id="ncName" type="text" placeholder="Rahul Mehta"></div>
+    <div class="in-field"><label>Mobile number</label><input id="ncMobile" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210"></div>
+    <div class="in-field"><label>Password</label><input id="ncPassword" type="text" placeholder="Set a simple password"></div>
+    <div class="in-field"><label>Starting balance (₹)</label><input id="ncBalance" type="number" inputmode="numeric" placeholder="1000"></div>
+    <button class="btn-solid" onclick="submitNewCustomer()">Create account</button>
+    <button style="width:100%;padding:12px;border:none;background:transparent;color:var(--ink-70);font-size:13px;margin-top:6px;" onclick="closeOverlay('newCustOverlay')">Cancel</button>
+    <div class="msg err" id="newCustError"></div>
+    <div class="msg ok" id="newCustSuccess"></div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAUESVBaflyYpjkoPHLx7tKeTUtfZbL83oEtB-2wxGDpjHFXEcvcIgsUvMMe2ynhWy-w/exec";
+const SESSION_KEY = 'neighbourhood_mgmt_session';
+
+let session = null; // {username, name, role, outlet}
+let txnType = 'Add';
+let selectedCustomer = null;
+let selectedPhotoBase64 = null, selectedPhotoMime = null, selectedPhotoFilename = null;
+let searchDebounce;
+let allCustomersCache = [];
+
+/* ---- API ---- */
+async function api(action, payload){
+  const res = await fetch(APPS_SCRIPT_URL, {method:'POST', body: JSON.stringify({action, ...payload})});
+  return res.json();
+}
+
+/* ---- Session / login ---- */
+function restoreSession(){
+  const raw = localStorage.getItem(SESSION_KEY);
+  if(!raw) return;
+  try{ session = JSON.parse(raw); enterDashboard(); }catch(e){ localStorage.removeItem(SESSION_KEY); }
+}
+
+async function doMgmtLogin(){
+  const username = document.getElementById('mgmtUsername').value.trim();
+  const password = document.getElementById('mgmtPassword').value;
+  const role = document.getElementById('mgmtRole').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  if(!username || !password){ errEl.textContent = 'Enter username and password.'; return; }
+
+  const res = await api('managementLogin', {username, password, role});
+  if(!res.success){ errEl.textContent = res.error || 'Login failed.'; return; }
+
+  session = {username, name: res.name, role: res.role, outlet: res.outlet || ''};
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  enterDashboard();
+}
+
+function logout(){
+  localStorage.removeItem(SESSION_KEY);
+  session = null;
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mgmtPassword').value = '';
+}
+
+function enterDashboard(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('dashWho').textContent = session.name + ' · ' + session.role + (session.outlet ? ' · ' + session.outlet : '');
+
+  document.getElementById('kmpPanel').classList.remove('active');
+  document.getElementById('accountsPanel').classList.remove('active');
+  document.getElementById('outletPanel').classList.remove('active');
+
+  if(session.role === 'KMP'){
+    document.getElementById('dashTitle').textContent = 'Master control';
+    document.getElementById('kmpPanel').classList.add('active');
+    loadOutlets(); loadMenuList(); loadKmpOutletFilter(); loadKmpOrders(); loadUsers();
+  } else if(session.role === 'Accounts'){
+    document.getElementById('dashTitle').textContent = 'Accounts counter';
+    document.getElementById('accountsPanel').classList.add('active');
+    loadAllCustomers();
+  } else if(session.role === 'Outlet'){
+    document.getElementById('dashTitle').textContent = 'Outlet dashboard';
+    document.getElementById('outletPanel').classList.add('active');
+    document.getElementById('outletBadge').textContent = session.outlet;
+    loadOutletOrders();
+  }
+}
+
+/* ================= KMP ================= */
+function switchKmpTab(tab){
+  document.querySelectorAll('#kmpPanel > .tabs button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  ['kmpOutlets','kmpMenu','kmpOrders','kmpUsers'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('kmp' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+}
+
+async function loadOutlets(){
+  const res = await api('getOutlets', {});
+  const outlets = res.success ? res.outlets : [];
+  document.getElementById('outletList').innerHTML = outlets.length
+    ? outlets.map(o => `<span class="outlet-chip">${o}</span>`).join('')
+    : '<div class="empty-state">No outlets yet — add your first one above.</div>';
+
+  const sel = document.getElementById('itemOutlet');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Select outlet…</option>' + outlets.map(o => `<option value="${o}">${o}</option>`).join('');
+  sel.value = cur;
+
+  const uSel = document.getElementById('userOutlet');
+  const uCur = uSel.value;
+  uSel.innerHTML = outlets.map(o => `<option value="${o}">${o}</option>`).join('');
+  uSel.value = uCur;
+}
+
+async function submitOutlet(){
+  const name = document.getElementById('outletName').value.trim();
+  const msg = document.getElementById('outletMsg');
+  msg.className = 'msg';
+  if(!name){ msg.textContent = 'Enter an outlet name.'; msg.classList.add('err'); return; }
+  const res = await api('addOutlet', {name});
+  if(!res.success){ msg.textContent = res.error || 'Could not add outlet.'; msg.classList.add('err'); return; }
+  msg.textContent = 'Added ' + name + '.'; msg.classList.add('ok');
+  document.getElementById('outletName').value = '';
+  loadOutlets(); loadKmpOutletFilter();
+}
+
+function handlePhotoSelect(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  selectedPhotoMime = file.type; selectedPhotoFilename = file.name;
+  const reader = new FileReader();
+  reader.onload = () => {
+    selectedPhotoBase64 = reader.result.split(',')[1];
+    document.getElementById('photoPreview').innerHTML = `<img src="${reader.result}">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitMenuItem(){
+  const outlet = document.getElementById('itemOutlet').value;
+  const category = document.getElementById('itemCategory').value.trim();
+  const price = document.getElementById('itemPrice').value;
+  const name = document.getElementById('itemName').value.trim();
+  const msg = document.getElementById('menuMsg');
+  msg.className = 'msg';
+  if(!outlet || !name || !price){ msg.textContent = 'Outlet, item name and price are required.'; msg.classList.add('err'); return; }
+
+  let imageUrl = '';
+  if(selectedPhotoBase64){
+    const uploadRes = await api('uploadImage', {base64: selectedPhotoBase64, filename: selectedPhotoFilename, mimeType: selectedPhotoMime});
+    if(uploadRes.success) imageUrl = uploadRes.url;
+  }
+  const res = await api('addMenuItem', {outlet, category, price, name, imageUrl});
+  if(!res.success){ msg.textContent = res.error || 'Could not add item.'; msg.classList.add('err'); return; }
+  msg.textContent = 'Added ' + name + ' to ' + outlet + '.'; msg.classList.add('ok');
+  ['itemCategory','itemPrice','itemName'].forEach(id => document.getElementById(id).value = '');
+  selectedPhotoBase64 = null;
+  document.getElementById('photoPreview').innerHTML = '🍽️';
+  document.getElementById('photoInput').value = '';
+  loadMenuList();
+}
+
+async function loadMenuList(){
+  const res = await api('getMenuAdmin', {});
+  const items = res.success ? res.items : [];
+  const wrap = document.getElementById('menuList');
+  if(items.length === 0){ wrap.innerHTML = '<div class="empty-state dark">No menu items yet.</div>'; return; }
+  const byOutlet = {};
+  items.forEach(i => { if(!byOutlet[i.outlet]) byOutlet[i.outlet] = []; byOutlet[i.outlet].push(i); });
+  wrap.innerHTML = Object.keys(byOutlet).map(outlet => `
+    <div class="group-label">${outlet}</div>
+    ${byOutlet[outlet].map(i => `
+      <div class="row-card">
+        <div class="thumb">${i.image ? `<img src="${i.image}">` : '🍽️'}</div>
+        <div class="info"><div class="name">${i.name}</div><div class="meta">${i.category || ''}</div></div>
+        <span class="price">₹${i.price}</span>
+        <button class="edit-price-btn" onclick="editPrice('${i.id}', ${i.price})">✎</button>
+        <span class="avail-badge ${i.available ? 'on' : 'off'}">${i.available ? 'Available' : 'Hidden'}</span>
+      </div>
+    `).join('')}
+  `).join('');
+}
+
+async function editPrice(id, currentPrice){
+  const input = prompt('New price (₹):', currentPrice);
+  if(input === null) return;
+  const price = Number(input);
+  if(!price || price <= 0){ alert('Enter a valid price.'); return; }
+  await api('updateMenuItemPrice', {id, price});
+  loadMenuList();
+}
+
+async function loadKmpOutletFilter(){
+  const res = await api('getOutlets', {});
+  const outlets = res.success ? res.outlets : [];
+  const sel = document.getElementById('kmpOutletFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="All">All outlets</option>' + outlets.map(o => `<option value="${o}">${o}</option>`).join('');
+  sel.value = cur;
+}
+
+async function loadKmpOrders(){
+  const outlet = document.getElementById('kmpOutletFilter').value;
+  const res = await api('getOrders', {outlet});
+  const orders = res.success ? res.orders : [];
+  const grid = document.getElementById('kmpOrdersGrid');
+  grid.innerHTML = orders.length === 0
+    ? '<div class="empty-state dark">No orders yet.</div>'
+    : orders.slice(0, 40).map(o => `<div class="ticket status-${o.status}">${ticketHtml(o, false)}</div>`).join('');
+}
+
+function toggleUserOutletField(){
+  document.getElementById('userOutletField').style.display = document.getElementById('userRole').value === 'Outlet' ? 'block' : 'none';
+}
+
+async function submitUser(){
+  const name = document.getElementById('userName').value.trim();
+  const username = document.getElementById('userUsername').value.trim();
+  const password = document.getElementById('userPassword').value;
+  const role = document.getElementById('userRole').value;
+  const outletName = document.getElementById('userOutlet').value;
+  const msg = document.getElementById('userMsg');
+  msg.className = 'msg';
+  if(!name || !username || !password){ msg.textContent = 'Name, username and password are required.'; msg.classList.add('err'); return; }
+  if(role === 'Outlet' && !outletName){ msg.textContent = 'Select which outlet this login is for.'; msg.classList.add('err'); return; }
+
+  const res = await api('addUser', {name, username, password, role, outletName});
+  if(!res.success){ msg.textContent = res.error || 'Could not create login.'; msg.classList.add('err'); return; }
+  msg.textContent = 'Login created for ' + name + '.'; msg.classList.add('ok');
+  ['userName','userUsername','userPassword'].forEach(id => document.getElementById(id).value = '');
+  loadUsers();
+}
+
+async function loadUsers(){
+  const res = await api('getUsers', {});
+  const users = (res.success ? res.users : []).filter(u => u.role !== 'KMP');
+  const wrap = document.getElementById('userList');
+  wrap.innerHTML = users.length === 0
+    ? '<div class="empty-state">No staff logins yet.</div>'
+    : users.map(u => `
+      <div class="cust-row">
+        <div><div class="name">${u.name}</div><div class="mobile">${u.username} · ${u.role}${u.outlet ? ' · ' + u.outlet : ''}</div></div>
+      </div>
+    `).join('');
+}
+
+/* ================= ACCOUNTS ================= */
+function debouncedSearch(){
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(runSearch, 250);
+}
+
+async function runSearch(){
+  const query = document.getElementById('searchInput').value.trim();
+  document.getElementById('custListLabel').textContent = query ? 'Search results' : 'All customers';
+  if(!query){ renderCustomers(allCustomersCache); return; }
+  const res = await api('searchCustomers', {query});
+  renderCustomers(res.success ? res.customers : []);
+}
+
+async function loadAllCustomers(){
+  const res = await api('getAllCustomers', {});
+  allCustomersCache = res.success ? res.customers : [];
+  renderCustomers(allCustomersCache);
+}
+
+function renderCustomers(list){
+  const wrap = document.getElementById('custResults');
+  if(list.length === 0){ wrap.innerHTML = '<div class="empty-state dark">No customers yet — add the first one above.</div>'; return; }
+  wrap.innerHTML = list.map(c => `
+    <div class="cust-row" onclick='openBalancePanel(${JSON.stringify(c)})'>
+      <div><div class="name">${c.name}</div><div class="mobile">${c.mobile}</div></div>
+      <div class="bal">₹${c.balance}</div>
+    </div>
+  `).join('');
+}
+
+function openBalancePanel(c){
+  selectedCustomer = c;
+  document.getElementById('balCustName').textContent = c.name;
+  document.getElementById('balCustSub').textContent = c.mobile + ' · current balance ₹' + c.balance;
+  document.getElementById('amountInput').value = '';
+  document.getElementById('balanceError').textContent = '';
+  setTxnType('Add');
+  document.getElementById('balanceOverlay').style.display = 'flex';
+}
+
+function setTxnType(type){
+  txnType = type;
+  const addBtn = document.getElementById('addBtn'), reduceBtn = document.getElementById('reduceBtn');
+  if(type === 'Add'){
+    addBtn.style.background = 'var(--sage)'; addBtn.style.color = '#fff'; addBtn.style.borderColor = 'var(--sage)';
+    reduceBtn.style.background = '#fff'; reduceBtn.style.color = 'var(--ink-70)'; reduceBtn.style.borderColor = 'rgba(34,32,27,.18)';
+  } else {
+    reduceBtn.style.background = 'var(--brick)'; reduceBtn.style.color = '#fff'; reduceBtn.style.borderColor = 'var(--brick)';
+    addBtn.style.background = '#fff'; addBtn.style.color = 'var(--ink-70)'; addBtn.style.borderColor = 'rgba(34,32,27,.18)';
+  }
+}
+
+async function submitBalanceChange(){
+  const amount = Number(document.getElementById('amountInput').value);
+  const errEl = document.getElementById('balanceError');
+  if(!amount || amount <= 0){ errEl.textContent = 'Enter a valid amount.'; return; }
+  const res = await api('adjustBalance', {mobile: selectedCustomer.mobile, amount, type: txnType});
+  if(!res.success){ errEl.textContent = res.error || 'Could not update balance.'; return; }
+  closeOverlay('balanceOverlay');
+  loadAllCustomers();
+}
+
+function openNewCustomer(){
+  ['ncName','ncMobile','ncPassword','ncBalance'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newCustError').textContent = '';
+  document.getElementById('newCustSuccess').textContent = '';
+  document.getElementById('newCustOverlay').style.display = 'flex';
+}
+
+async function submitNewCustomer(){
+  const name = document.getElementById('ncName').value.trim();
+  const mobile = document.getElementById('ncMobile').value.trim();
+  const password = document.getElementById('ncPassword').value;
+  const balance = Number(document.getElementById('ncBalance').value) || 0;
+  const errEl = document.getElementById('newCustError'), okEl = document.getElementById('newCustSuccess');
+  errEl.textContent = ''; okEl.textContent = '';
+  if(!name || !mobile || !password){ errEl.textContent = 'Name, mobile number and password are required.'; return; }
+  if(!/^\d{10}$/.test(mobile)){ errEl.textContent = 'Enter a valid 10-digit mobile number.'; return; }
+  const res = await api('addCustomer', {name, mobile, password, balance});
+  if(!res.success){ errEl.textContent = res.error || 'Could not create customer.'; return; }
+  okEl.textContent = 'Account created for ' + name + '.';
+  setTimeout(() => { closeOverlay('newCustOverlay'); loadAllCustomers(); }, 800);
+}
+
+function closeOverlay(id){ document.getElementById(id).style.display = 'none'; }
+
+/* ================= OUTLET ================= */
+function switchOutletTab(tab){
+  document.querySelectorAll('#outletPanel > .tabs button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('outletOrders').classList.toggle('active', tab === 'orders');
+  document.getElementById('outletMenu').classList.toggle('active', tab === 'menu');
+  if(tab === 'menu') loadOutletMenu();
+}
+
+function timeAgo(ts){
+  const diff = Math.floor((Date.now() - new Date(ts).getTime())/1000);
+  if(diff < 60) return diff + 's ago';
+  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+  return Math.floor(diff/3600) + 'h ago';
+}
+
+function ticketHtml(o, showActions){
+  showActions = showActions !== false;
+  return `
+    <div class="ticket-head">
+      <div>
+        <div class="cust">${o.customerName}</div>
+        <div class="mobile">${o.mobile || ''}</div>
+        <div class="time">${o.outlet} · ${timeAgo(o.timestamp)}</div>
+      </div>
+      <div class="status-tag ${o.status}">${o.status}</div>
+    </div>
+    ${o.notes ? `<div class="note-block"><b>Note for kitchen</b>${o.notes}</div>` : ''}
+    <div class="ticket-body">${o.items.map(i => `<div class="ticket-row"><span>${i.qty} × ${i.name}</span><span class="amt">₹${i.qty*i.price}</span></div>`).join('')}</div>
+    <div class="ticket-total"><span>Total</span><span class="amt">₹${o.total}</span></div>
+    ${showActions ? `<div class="ticket-actions">${['Preparing','Prepared','Delivered'].map(s => `<button class="${o.status===s?'active':''}" onclick="setOutletStatus('${o.orderId}','${s}')">${s}</button>`).join('')}</div>` : ''}
+  `;
+}
+
+async function loadOutletOrders(){
+  const res = await api('getOrders', {outlet: session.outlet});
+  const orders = res.success ? res.orders : [];
+  const active = orders.filter(o => o.status !== 'Delivered');
+  const delivered = orders.filter(o => o.status === 'Delivered');
+  document.getElementById('outletActiveOrders').innerHTML = active.length === 0
+    ? '<div class="empty-state dark">No orders to prepare right now.</div>'
+    : active.map(o => `<div class="ticket status-${o.status}">${ticketHtml(o)}</div>`).join('');
+  document.getElementById('outletDeliveredOrders').innerHTML = delivered.length === 0
+    ? '<div class="empty-state dark">Nothing delivered yet.</div>'
+    : delivered.map(o => `<div class="ticket delivered">${ticketHtml(o)}</div>`).join('');
+  document.getElementById('outletDeliveredLabel').textContent = 'Delivered today (' + delivered.length + ')';
+}
+
+async function setOutletStatus(orderId, status){
+  await api('updateOrderStatus', {orderId, status});
+  loadOutletOrders();
+}
+
+async function loadOutletMenu(){
+  const res = await api('getMenuAdmin', {});
+  const items = (res.success ? res.items : []).filter(i => i.outlet === session.outlet);
+  const wrap = document.getElementById('outletMenuList');
+  wrap.innerHTML = items.length === 0
+    ? '<div class="empty-state dark">No menu items for your outlet yet — ask master control to add some.</div>'
+    : items.map(i => `
+      <div class="row-card">
+        <div class="thumb">${i.image ? `<img src="${i.image}">` : '🍽️'}</div>
+        <div class="info"><div class="name">${i.name}</div><div class="meta">${i.category || ''}</div></div>
+        <span class="price">₹${i.price}</span>
+        <button class="avail-toggle ${i.available ? 'on' : ''}" onclick="toggleOutletItem('${i.id}', ${!i.available})"><span class="knob"></span></button>
+      </div>
+    `).join('');
+}
+
+async function toggleOutletItem(id, newState){
+  await api('toggleMenuItemAvailability', {id, available: newState});
+  loadOutletMenu();
+}
+
+/* ---- Init + polling ---- */
+restoreSession();
+setInterval(() => {
+  if(!session) return;
+  if(session.role === 'KMP' && document.getElementById('kmpOrders').classList.contains('active')) loadKmpOrders();
+  if(session.role === 'Outlet' && document.getElementById('outletOrders').classList.contains('active')) loadOutletOrders();
+}, 10000);
+</script>
+</body>
+</html>
